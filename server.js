@@ -8,6 +8,8 @@ const app = express();
 app.set('trust proxy', true);
 app.use(express.json());
 
+var lastReq = 0;
+
 // --- CONFIG ---
 const PORT = process.env.PORT || 3000;
 
@@ -82,11 +84,17 @@ app.get("/ip", (req, res) => {
 });
 
 app.post("/ai", (req, res) => {
-  askGPT(req.body.prompt)
-    .then(result => {
-      res.send(result);
-    })
-    .catch(res.status(500).send);
+  if ((Date.now() - lastReq) < 5000) {
+      lastReq = Date.now();
+      res.status(429).send("ERROR 429: Too many requests.");
+  } else {
+    lastReq = Date.now();
+    askGPT(req.body.prompt)
+      .then(result => {
+        res.send(result);
+      })
+      .catch(err => res.status(500).send(err.message));
+  }
 });
 
 // --- FALLBACK ---
