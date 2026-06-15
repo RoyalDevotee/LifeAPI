@@ -86,9 +86,7 @@ app.post("/ai", (req, res) => {
     .then(result => {
       res.send(result);
     })
-    .catch(error => {
-      res.status(500).send("OpenAI API ERROR");
-    });
+    .catch(res.status(500).send);
 });
 
 // --- FALLBACK ---
