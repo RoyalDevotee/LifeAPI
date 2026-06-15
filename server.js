@@ -98,8 +98,83 @@ app.post("/ai", (req, res) => {
 });
 
 // --- FALLBACK ---
+const blockedPaths = [
+  // sensitive files
+  ".env",
+  ".git",
+  ".git/",
+  ".git/config",
+  ".DS_Store",
+
+  // wordpress
+  "wp-admin",
+  "wp-login.php",
+  "xmlrpc.php",
+
+  // graphql probing
+  "graphql",
+  "api/graphql",
+  "graphql/api",
+  "api/gql",
+
+  // docker / registry
+  "v2/_catalog",
+  "v2/",
+
+  // admin / panels
+  "admin",
+  "login.action",
+  "server-status",
+  "server-info",
+  "console",
+
+  // enterprise exploit targets
+  "ecp",
+  "owa",
+  "autodiscover",
+
+  // cpanel / whm
+  "cpanel",
+  "whm",
+  "___proxy_subdomain_cpanel",
+  "___proxy_subdomain_whm",
+
+  // misc common scanner targets
+  "phpmyadmin",
+  "pma",
+  "backend",
+  "debug",
+  "actuator",
+  "metrics"
+];
+
+const blockedUA = [
+  "l9scan",
+  "Leakix",
+  "sqlmap",
+  "nikto",
+  "nmap",
+  "acunetix",
+  "zgrab",
+  "masscan"
+];
+
 app.all("*", (req, res) => {
-    return res.status(404).send("ERROR 404: Not Found");
+  const path = (req.path || "").toLowerCase();
+  const ua = (req.headers["user-agent"] || "").toLowerCase();
+
+  // UA block
+  const isBadUA = blockedUA.some(bad => ua.includes(bad.toLowerCase()));
+
+  // Path block
+  const isBadPath = blockedPaths.some(p => path.includes(p));
+
+  if (isBadUA || isBadPath) {
+    return res.status(403).send("ERROR 403: Do not try to exploit our API backend.");
+  }
+
+  // default pass-through (important if you still have routes below)
+  return res.status(404).send("ERROR 404: Not Found");
 });
 
 // --- START ---
