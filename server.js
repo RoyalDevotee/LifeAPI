@@ -65,7 +65,7 @@ function askGPT(prompt) {
     }
     return response.json();
   })
-  .then(data => data.output_text);
+  .then(data => data[0].content[0].text);
 }
 
 // --- ROUTES ---
