@@ -101,14 +101,15 @@ app.post("/shorturl", (req, res) => {
         },
         body: JSON.stringify({
             url: longUrl,
-            domain: "nxlab.pse.is" // 指定自訂短網域
+            // 提示：若出現 400 錯誤，可將此處改為 "pse.is" 或是整行刪除以使用預設網域
+            domain: "nxlab.pse.is" 
         })
     })
     .then(response => {
-        // 3. 處理非 200 OK 的錯誤回應
+        // 3. 改良錯誤處理：如果 HTTP 狀態不為 ok，讀取完整的回傳 Body 以利除錯
         if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.message || `PicSee HTTP ${response.status}`);
+            return response.text().then(errText => {
+                throw new Error(`PicSee HTTP ${response.status} - 原始錯誤內容: ${errText}`);
             });
         }
         return response.json();
@@ -122,7 +123,7 @@ app.post("/shorturl", (req, res) => {
         }
     })
     .catch(err => {
-        // 5. 錯誤處理，回傳 500 狀態碼
+        // 5. 錯誤處理，回傳 500 狀態碼與更詳細的錯誤日誌
         console.error("PicSee API error:", err);
         res.status(500).send(err.message);
     });
