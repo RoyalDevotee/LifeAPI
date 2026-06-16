@@ -83,6 +83,28 @@ app.get("/ip", (req, res) => {
   res.send(req.ip);
 });
 
+// PicSee API 錯誤代碼繁體中文對照表
+const picseeErrorCodes = {
+  "PUB00001": "發生未預期的錯誤，請稍後再試。",
+  "PUB00002": "請求參數無效，請檢查輸入網址。",
+  "PUB00005": "已超過 API 請求頻率限制，請稍候再試。",
+  "PUB00006": "找不到所請求的伺服器資源。",
+  "PUB00007": "已達到 LifeTools 的短網址額度限制。",
+  "PUB00202": "此長網址被 PicSee 判定為無效或不安全的網址，請嘗試其他網址。",
+  "PUB00301": "找不到所請求的短網址。",
+  "PUB00504": "所請求的短網址已被刪除。",
+  "PUB00505": "所請求短網址的原始網域無效。",
+  "PUB00508": "無權限編輯此短網址的到期時間。",
+  "PUB00509": "到期時間無效，您只能設定未來的時間。",
+  "PUB00510": "此短網址不允許被更新指向至該目標網址。",
+  "PUB00511": "此短網址屬於其他用戶，您無權修改。",
+  "PUB00512": "無效的圖片網址格式。",
+  "PUB00513": "標籤數量已達上限，無法再新增標籤。",
+  "PUB00601": "批次建立短網址時發生錯誤，請重試。",
+  "PUB00701": "找不到所請求的短網址。",
+  "PUB01001": "網址格式不正確，網址必須是字串並包含通訊協定（http/https）與路徑。"
+};
+
 // 縮短網址路由 (串接 PicSee API)
 app.post("/shorturl", (req, res) => {
     const longUrl = req.body.url;
@@ -101,15 +123,30 @@ app.post("/shorturl", (req, res) => {
         },
         body: JSON.stringify({
             url: longUrl,
-            // 提示：若出現 400 錯誤，可將此處改為 "pse.is" 或是整行刪除以使用預設網域
-            domain: "nxlab.pse.is" 
+            domain: "nxlab.pse.is" // 指定自訂短網域
         })
     })
     .then(response => {
-        // 3. 改良錯誤處理：如果 HTTP 狀態不為 ok，讀取完整的回傳 Body 以利除錯
+        // 3. 處理錯誤回應，解析出 PicSee 專屬的 PUB 代碼
         if (!response.ok) {
             return response.text().then(errText => {
-                throw new Error(`PicSee HTTP ${response.status} - 原始錯誤內容: ${errText}`);
+                let chineseErrorMessage = "縮網址伺服器回應異常，請稍候再試。";
+                try {
+                    const errorObject = JSON.parse(errText);
+                    const errorCode = errorObject?.error?.code;
+                    
+                    // 若能在對照表中找到對應代碼，使用優雅的中文描述
+                    if (errorCode && picseeErrorCodes[errorCode]) {
+                        chineseErrorMessage = picseeErrorCodes[errorCode];
+                    } else {
+                        // 備用無對應代碼時的輸出
+                        chineseErrorMessage = `PicSee 錯誤 [${errorCode || "UNKNOWN"}]: ${errorObject?.error?.message || "未知錯誤"}`;
+                    }
+                } catch (parseError) {
+                    // 萬一非 JSON 格式時的備用處理
+                    chineseErrorMessage = `連線異常 (HTTP ${response.status})`;
+                }
+                throw new Error(chineseErrorMessage);
             });
         }
         return response.json();
@@ -123,9 +160,9 @@ app.post("/shorturl", (req, res) => {
         }
     })
     .catch(err => {
-        // 5. 錯誤處理，回傳 500 狀態碼與更詳細的錯誤日誌
+        // 5. 錯誤處理，回傳 400 狀態碼與更直觀的中文錯誤給前端
         console.error("PicSee API error:", err);
-        res.status(500).send(err.message);
+        res.status(400).send(err.message);
     });
 });
 
