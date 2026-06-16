@@ -83,6 +83,51 @@ app.get("/ip", (req, res) => {
   res.send(req.ip);
 });
 
+// 縮短網址路由 (串接 PicSee API)
+app.post("/shorturl", (req, res) => {
+    const longUrl = req.body.url;
+    
+    // 1. 檢查請求中是否包含必填之原始長網址
+    if (!longUrl) {
+        return res.status(400).send("ERROR 400: URL parameter is required.");
+    }
+
+    // 2. 向 PicSee 伺服器發送 POST 請求
+    fetch("https://api.pics.ee/v1/links", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.PICSEEKEY}` // 採用 Bearer 驗證
+        },
+        body: JSON.stringify({
+            url: longUrl,
+            domain: "nxlab.pse.is" // 指定自訂短網域
+        })
+    })
+    .then(response => {
+        // 3. 處理非 200 OK 的錯誤回應
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.message || `PicSee HTTP ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 4. 驗證並提取回傳的 picseeUrl
+        if (data && data.data && data.data.picseeUrl) {
+            res.send(data.data.picseeUrl); // 成功回傳短網址字串
+        } else {
+            throw new Error("PicSee 回傳之資料格式異常");
+        }
+    })
+    .catch(err => {
+        // 5. 錯誤處理，回傳 500 狀態碼
+        console.error("PicSee API error:", err);
+        res.status(500).send(err.message);
+    });
+});
+
 app.post("/ai", (req, res) => {
   if ((Date.now() - lastReq) < 5000) {
       lastReq = Date.now();
