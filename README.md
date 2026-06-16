@@ -38,3 +38,14 @@ POST https://lifeapi.zone.id/ai
 ```
 #### 介紹: 把單次問題用OpenAI API發給GPT-5.4 Nano
 #### 回應: 純AI的回答
+
+3.
+```
+POST https://lifeapi.zone.id/shorturl
+```
+請求body:
+```
+{"url": "https://example.com"}
+```
+#### 介紹: 把URL丟給PICSEE做縮網址
+#### 回應: 純短網址
