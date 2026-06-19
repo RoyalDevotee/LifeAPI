@@ -72,7 +72,7 @@ function askGPT(prompt) {
 
 // --- ROUTES ---
 app.get("/", (req, res) => {
-  res.redirect("https://github.com/RoyalDevotee/LifeAPI/blob/main/README.md");
+  res.send("LifeAPI Online!");
 });
 
 app.get("/script", (req, res) => {
