@@ -184,6 +184,16 @@ app.post("/ai", (req, res) => {
   }
 });
 
+// --- Pro ---
+function proAuth (key) {
+    const proMembers = process.env.PRO.split(",");
+    if (proMembers.includes(key)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 // --- FALLBACK ---
 const blockedPaths = [
   // sensitive files
