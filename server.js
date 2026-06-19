@@ -182,7 +182,7 @@ app.post("/shorturl", (req, res) => {
  * AI 賽博網頁圖卡生成器路由 (Type C)
  * 整合現有 Pro 驗證機制與 gpt-5.4-nano 運算服務
  */
-app.post("/html-generator", (req, res) => {
+app.post("/api/html", (req, res) => {
     const { passkey, prompt, systemPrompt, ratio } = req.body;
 
     // 1. 執行 Pro 專業版權限驗證
