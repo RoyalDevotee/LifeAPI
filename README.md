@@ -4,7 +4,7 @@
 ### 1. 匯入LifeAPI:
 #### 在HTML的```<head></head>```標籤內加入以下HTML:
 ```
-<script src="https://lifeapi.zone.id"></script>
+<script src="https://lifetools.nett.to/scripts/lifeapi.js"></script>
 ```
 
 ### 2. 串接LifeAPI:
