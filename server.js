@@ -178,6 +178,44 @@ app.post("/shorturl", (req, res) => {
     });
 });
 
+/**
+ * AI 賽博網頁圖卡生成器路由 (Type C)
+ * 整合現有 Pro 驗證機制與 gpt-5.4-nano 運算服務
+ */
+app.post("/html-generator", (req, res) => {
+    const { passkey, prompt, systemPrompt, ratio } = req.body;
+
+    // 1. 執行 Pro 專業版權限驗證
+    if (!proAuth(passkey)) {
+        return res.status(403).send("PRO 驗證失敗：您輸入的專業版密鑰不正確或已失效，無權限使用此工具。若需申請密鑰，請聯絡 royaldevotee@nxlab.zone.id。");
+    }
+
+    // 2. 檢查必要參數
+    if (!prompt) {
+        return res.status(400).send("ERROR 400: Prompt parameter is required.");
+    }
+
+    // 3. 頻率限制 (比照原本的 /ai 路由)
+    if ((Date.now() - lastReq) < 5000) {
+        lastReq = Date.now();
+        return res.status(429).send("ERROR 429: Too many requests.");
+    }
+    lastReq = Date.now();
+
+    // 4. 重組指令，並傳入現有的 askGPT 處理
+    const combinedPrompt = `${systemPrompt || "請生成美觀的 HTML/CSS 圖卡"}\n\n[使用者設計主題]：${prompt}\n[指定尺寸比例]：${ratio || "1:1"}`;
+
+    askGPT(combinedPrompt)
+        .then(result => {
+            // 回傳 JSON 格式以配合同步開發的前端代碼解析
+            res.json({ code: result });
+        })
+        .catch(err => {
+            console.error("HTML Generator API error:", err);
+            res.status(500).send(err.message);
+        });
+});
+
 app.post("/ai", (req, res) => {
   if ((Date.now() - lastReq) < 5000) {
       lastReq = Date.now();
