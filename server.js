@@ -110,15 +110,23 @@ const picseeErrorCodes = {
 };
 
 // 縮短網址路由 (串接 PicSee API)
+// 專業版短網址路由 (整合 Pro 權限驗證與 PicSee 服務)
 app.post("/shorturl", (req, res) => {
     const longUrl = req.body.url;
-    
-    // 1. 檢查請求中是否包含必填之原始長網址
+    const userPasskey = req.body.passkey; // 接收前端送來的 Pro 密鑰
+
+    // 1. 執行 Pro 專業版權限安全驗證
+    if (!proAuth(userPasskey)) {
+        // 驗證失敗時，直接中斷請求並回傳 403 拒絕存取狀態
+        return res.status(403).send("PRO 驗證失敗：您輸入的專業版密鑰不正確或已失效，無權限使用此工具。若需申請密鑰，請聯絡 royaldevotee@nxlab.zone.id。");
+    }
+
+    // 2. 檢查請求中是否包含必填之原始長網址
     if (!longUrl) {
         return res.status(400).send("ERROR 400: URL parameter is required.");
     }
 
-    // 2. 向 PicSee 伺服器發送 POST 請求
+    // 3. 向 PicSee 伺服器發送 POST 請求
     fetch("https://api.pics.ee/v1/links", {
         method: "POST",
         headers: {
@@ -131,7 +139,7 @@ app.post("/shorturl", (req, res) => {
         })
     })
     .then(response => {
-        // 3. 處理錯誤回應，解析出 PicSee 專屬的 PUB 代碼
+        // 4. 處理錯誤回應，解析出 PicSee 專屬的 PUB 代碼
         if (!response.ok) {
             return response.text().then(errText => {
                 let chineseErrorMessage = "縮網址伺服器回應異常，請稍候再試。";
@@ -156,7 +164,7 @@ app.post("/shorturl", (req, res) => {
         return response.json();
     })
     .then(data => {
-        // 4. 驗證並提取回傳的 picseeUrl
+        // 5. 驗證並提取回傳的 picseeUrl
         if (data && data.data && data.data.picseeUrl) {
             res.send(data.data.picseeUrl); // 成功回傳短網址字串
         } else {
@@ -164,7 +172,7 @@ app.post("/shorturl", (req, res) => {
         }
     })
     .catch(err => {
-        // 5. 錯誤處理，回傳 400 狀態碼與更直觀的中文錯誤給前端
+        // 6. 錯誤處理，回傳 400 狀態碼與更直觀的中文錯誤給前端
         console.error("PicSee API error:", err);
         res.status(400).send(err.message);
     });
