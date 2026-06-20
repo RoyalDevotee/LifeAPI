@@ -135,7 +135,7 @@ app.post("/shorturl", (req, res) => {
         },
         body: JSON.stringify({
             url: longUrl,
-            domain: "nxlab.pse.is" // 指定自訂短網域
+            domain: "urlx.zone.id" // 指定自訂短網域
         })
     })
     .then(response => {
